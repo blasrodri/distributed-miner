@@ -6,8 +6,13 @@ edition = "2021"
 [dependencies]
 borsh = {version = "1.5.1", features = ["derive"] }
 drillx = {path = "../drillx/drillx"}
+ore-api = {path = "../ore/api"}
+ore-utils = {path = "../ore/utils"}
 env_logger = "0.11.3"
 log = "0.4.22"
 rayon = "1.10.0"
 structopt = { version = "0.3", default-features = false }
 tungstenite = "0.23.0"
+solana-program = "^1.18"
+solana-sdk = "^1.18"
+solana-rpc-client = "^1.18"
