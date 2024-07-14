@@ -1,40 +1,103 @@
-use std::str::FromStr;
+use std::{
+    str::FromStr,
+    sync::mpsc::sync_channel,
+    thread::{self, sleep, spawn},
+    time::Duration,
+};
 
-use distributed_drillx::{get_hash, MasterNode, NodeHashComputer};
+use distributed_drillx::{
+    get_hash, get_proof, miner::get_clock, start_websocket_server, ChallengeInput, MasterNode,
+    NodeHashComputer, SubmittedSolution, SubmittedSolutionEnum,
+};
+use drillx::Solution;
 use solana_rpc_client::rpc_client::RpcClient;
 use solana_sdk::{
-    commitment_config::CommitmentConfig, pubkey::Pubkey, signature::Keypair, signer::EncodableKey,
+    commitment_config::CommitmentConfig,
+    pubkey::Pubkey,
+    signature::Keypair,
+    signer::{EncodableKey, Signer},
 };
 use structopt::StructOpt;
 
 fn main() {
     env_logger::init();
     let opt = NodeType::from_args();
+    let cluster = "https://api.devnet.solana.com";
+    let rpc_client: RpcClient =
+        RpcClient::new_with_commitment(cluster, CommitmentConfig::confirmed());
 
+    let (tx, rx) = sync_channel(1_000);
     match opt {
-        NodeType::Master { host, keypair } => {
-            let keypair = Keypair::read_from_file(keypair).expect("could not read keypair");
-            MasterNode::start_websocket_server(host);
+        NodeType::Master {
+            host,
+            keypair: keypair_path,
+        } => {
+            let keypair: Keypair =
+                Keypair::read_from_file(keypair_path).expect("could not read keypair");
+            let tx_cloned = tx.clone();
+            thread::spawn(move || start_websocket_server(host, tx_cloned));
+            // TODO: load staking authorities from a file or whatever
+            let proof = get_proof(&rpc_client, keypair.pubkey());
+            log::info!("{:?}", proof.last_hash_at);
+            let staking_authority = keypair.pubkey();
+
+            let mut master_node = MasterNode::new(
+                rpc_client,
+                keypair,
+                [(staking_authority.clone(), proof)].into_iter().collect(),
+                rx,
+            );
+            // spawn new epoch thread
+            spawn(move || {
+                let rpc_client: RpcClient =
+                    RpcClient::new_with_commitment(cluster, CommitmentConfig::confirmed());
+                loop {
+                    let proof = get_proof(&rpc_client, staking_authority.clone());
+                    let clock = get_clock(&rpc_client);
+
+                    let next_cutoff = dbg!(proof.last_hash_at)
+                        .saturating_add(60)
+                        .saturating_sub(1 as i64)
+                        .saturating_sub(dbg!(clock.unix_timestamp))
+                        .max(5) as u64;
+                    log::info!("Next cutoff in {next_cutoff} seconds");
+                    sleep(Duration::from_secs(next_cutoff));
+                    tx.send(distributed_drillx::SubmittedSolutionEnum::NewEpoch)
+                        .unwrap();
+                    log::info!("New epoch submitted");
+                }
+            });
+            master_node.run();
         }
         NodeType::Node {
             master,
-            keypair,
             miner_authority,
+            ..
         } => {
-            let keypair = Keypair::read_from_file(keypair).expect("could not read keypair");
-            let cluster = "https://api.devnet.solana.com";
-            let rpc_client = RpcClient::new_with_commitment(cluster, CommitmentConfig::confirmed());
-
             let staker_authority =
                 Pubkey::from_str(&miner_authority).expect("could not load miner authority");
             let mut socket = NodeHashComputer::connect(master).unwrap();
             // move this to its own function
             loop {
                 let challenge = NodeHashComputer::receive_challenge(&rpc_client, staker_authority);
+                log::info!("challenge: {:?}", challenge);
 
-                let solution = get_hash(challenge);
-                let solution = [solution.d.as_slice(), solution.h.as_slice()].concat();
-                NodeHashComputer::send_solution(&mut socket, solution);
+                let (solution_hash, nonce) = get_hash(challenge.clone());
+                let solution =
+                    [solution_hash.d.as_slice(), nonce.to_le_bytes().as_slice()].concat();
+                // let s = Solution::new(solution_hash.d, nonce.to_le_bytes());
+                // assert!(s.is_valid(&challenge.challenge));
+                // assert!(solution.len() == 24);
+                let submitted_solution =
+                    SubmittedSolutionEnum::SubmittedSolution(SubmittedSolution {
+                        staking_authority: staker_authority,
+                        miner_authority: staker_authority,
+                        solution: solution.try_into().unwrap(),
+                    });
+                NodeHashComputer::send_solution(
+                    &mut socket,
+                    borsh::to_vec(&submitted_solution).unwrap(),
+                );
             }
         }
     }
