@@ -134,8 +134,8 @@ impl MasterNode {
                 let solution = Solution::new(digest, nonce);
                 let ixs = vec![ore_api::instruction::mine(
                     self.keypair.pubkey(),
-                    find_bus(),
                     *staking_authority,
+                    find_bus(),
                     solution,
                 )];
                 // todo: in parallel
