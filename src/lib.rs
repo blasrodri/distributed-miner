@@ -135,6 +135,7 @@ impl MasterNode {
                 let ixs = vec![ore_api::instruction::mine(
                     self.keypair.pubkey(),
                     find_bus(),
+                    *staking_authority,
                     solution,
                 )];
                 // todo: in parallel

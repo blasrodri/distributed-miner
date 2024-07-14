@@ -1353,9 +1353,9 @@ dependencies = [
  "drillx 2.0.0-beta",
  "env_logger 0.11.3",
  "log",
- "ore-api 2.0.0-beta",
+ "ore-api 2.0.0-beta.1",
  "ore-cli",
- "ore-utils 2.0.0-beta",
+ "ore-utils 2.0.0-beta.1",
  "rayon",
  "solana-client",
  "solana-program",
@@ -1395,7 +1395,6 @@ version = "2.0.0-beta"
 dependencies = [
  "blake3",
  "equix",
- "solana-program",
  "strum",
 ]
 
@@ -2624,7 +2623,7 @@ checksum = "ff011a302c396a5197692431fc1948019154afc178baf7d8e37367442a4601cf"
 
 [[package]]
 name = "ore-api"
-version = "2.0.0-beta"
+version = "2.0.0-beta.1"
 dependencies = [
  "array-const-fn-init",
  "bytemuck",
@@ -2632,7 +2631,7 @@ dependencies = [
  "drillx 2.0.0-beta",
  "mpl-token-metadata",
  "num_enum 0.7.2",
- "ore-utils 2.0.0-beta",
+ "ore-utils 2.0.0-beta.1",
  "shank",
  "solana-program",
  "spl-associated-token-account",
@@ -2664,7 +2663,7 @@ dependencies = [
 
 [[package]]
 name = "ore-cli"
-version = "1.0.0-alpha"
+version = "1.0.0-alpha.1"
 dependencies = [
  "bincode",
  "bs58 0.5.1",
@@ -2692,7 +2691,7 @@ dependencies = [
 
 [[package]]
 name = "ore-utils"
-version = "2.0.0-beta"
+version = "2.0.0-beta.1"
 dependencies = [
  "bytemuck",
  "solana-program",

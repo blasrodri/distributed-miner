@@ -22,16 +22,6 @@ use solana_client::{
 };
 use solana_transaction_status::{TransactionConfirmationStatus, UiTransactionEncoding};
 
-pub async fn mine(signer: Keypair, solution: Solution) {
-    // Submit most difficult hash
-    let mut ixs = vec![];
-    ixs.push(ore_api::instruction::mine(
-        signer.pubkey(),
-        find_bus(),
-        solution,
-    ));
-}
-
 const RPC_RETRIES: usize = 10;
 
 pub fn send_and_confirm(
