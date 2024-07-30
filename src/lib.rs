@@ -209,8 +209,8 @@ impl NodeHashComputer {
         let remaining_time = dbg!(proof
             .last_hash_at
             .checked_add(ONE_MINUTE - 5)
-            .unwrap_or(dbg!(clock.unix_timestamp + 1))
-            .max(clock.unix_timestamp + 1))
+            .unwrap_or(dbg!(clock.unix_timestamp + 10))
+            .max(clock.unix_timestamp + 10))
             - dbg!(clock.unix_timestamp);
         ChallengeInput {
             challenge: proof.challenge,

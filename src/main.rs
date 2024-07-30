@@ -58,7 +58,7 @@ fn main() {
                         .saturating_add(60)
                         .saturating_sub(1 as i64)
                         .saturating_sub(dbg!(clock.unix_timestamp))
-                        .max(5) as u64;
+                        .max(10) as u64;
                     log::info!("Next cutoff in {next_cutoff} seconds");
                     sleep(Duration::from_secs(next_cutoff));
                     tx.send(distributed_drillx::SubmittedSolutionEnum::NewEpoch)
