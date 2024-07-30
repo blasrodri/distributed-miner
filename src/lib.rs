@@ -138,8 +138,8 @@ impl MasterNode {
                 solution,
             )];
             // todo: in parallel
-            let result = send_and_confirm(&self.rpc, &self.keypair, &ixs, false).unwrap();
-            log::info!("Signature: {result}");
+            let result = send_and_confirm(&self.rpc, &self.keypair, &ixs, false);
+            log::info!("Signature: {:?}", result);
             inner_state.best_submitted_difficulty = 0;
             inner_state.epoch_solutions.clear();
 
@@ -206,11 +206,12 @@ impl NodeHashComputer {
         // ore_cli::utils::
         let proof = get_proof(rpc_client, staker_authority);
         let clock = get_clock(rpc_client);
-        let remaining_time = proof
+        let remaining_time = dbg!(proof
             .last_hash_at
             .checked_add(ONE_MINUTE - 5)
-            .unwrap_or(clock.unix_timestamp + 1)
-            - clock.unix_timestamp;
+            .unwrap_or(dbg!(clock.unix_timestamp + 1))
+            .max(clock.unix_timestamp + 1))
+            - dbg!(clock.unix_timestamp);
         ChallengeInput {
             challenge: proof.challenge,
             // remaining_time: proof.last_stake_at.saturating_add(ONE_MINUTE) as _,

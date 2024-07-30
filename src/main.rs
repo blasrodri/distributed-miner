@@ -6,10 +6,9 @@ use std::{
 };
 
 use distributed_drillx::{
-    get_hash, get_proof, miner::get_clock, start_websocket_server, ChallengeInput, MasterNode,
-    NodeHashComputer, SubmittedSolution, SubmittedSolutionEnum,
+    get_hash, get_proof, miner::get_clock, start_websocket_server, MasterNode, NodeHashComputer,
+    SubmittedSolution, SubmittedSolutionEnum,
 };
-use drillx::Solution;
 use solana_rpc_client::rpc_client::RpcClient;
 use solana_sdk::{
     commitment_config::CommitmentConfig,
