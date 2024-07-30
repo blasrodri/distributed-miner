@@ -5,7 +5,7 @@ edition = "2021"
 
 [dependencies]
 borsh = {version = "1.5.1", features = ["derive"] }
-drillx = {path = "../drillx/drillx"}
+drillx = { version = "2.0.0-beta.1", features = ["solana"] }
 ore-api = {path = "../ore/api"}
 ore-cli = {path = "../ore-cli", package = "ore-cli"}
 ore-utils = {path = "../ore/utils"}

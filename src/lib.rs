@@ -1,7 +1,7 @@
 use borsh::{BorshDeserialize, BorshSerialize};
 use drillx::{Hash, Solution};
 use miner::{find_bus, send_and_confirm};
-use ore_api::consts::{MIN_DIFFICULTY, ONE_MINUTE, PROOF};
+use ore_api::consts::{ONE_MINUTE, PROOF};
 use ore_api::state::Proof;
 use ore_utils::AccountDeserialize;
 use solana_rpc_client::rpc_client::RpcClient;
@@ -124,24 +124,22 @@ impl MasterNode {
         // TODO: give rewards away
 
         for (staking_authority, inner_state) in &mut self.state {
-            if inner_state.best_submitted_difficulty > MIN_DIFFICULTY {
-                let digest = inner_state.best_submitted_solution.solution[0..16]
-                    .try_into()
-                    .unwrap();
-                let nonce = inner_state.best_submitted_solution.solution[16..]
-                    .try_into()
-                    .unwrap();
-                let solution = Solution::new(digest, nonce);
-                let ixs = vec![ore_api::instruction::mine(
-                    self.keypair.pubkey(),
-                    *staking_authority,
-                    find_bus(),
-                    solution,
-                )];
-                // todo: in parallel
-                let result = send_and_confirm(&self.rpc, &self.keypair, &ixs, false).unwrap();
-                log::info!("Signature: {result}");
-            }
+            let digest = inner_state.best_submitted_solution.solution[0..16]
+                .try_into()
+                .unwrap();
+            let nonce = inner_state.best_submitted_solution.solution[16..]
+                .try_into()
+                .unwrap();
+            let solution = Solution::new(digest, nonce);
+            let ixs = vec![ore_api::instruction::mine(
+                self.keypair.pubkey(),
+                *staking_authority,
+                find_bus(),
+                solution,
+            )];
+            // todo: in parallel
+            let result = send_and_confirm(&self.rpc, &self.keypair, &ixs, false).unwrap();
+            log::info!("Signature: {result}");
             inner_state.best_submitted_difficulty = 0;
             inner_state.epoch_solutions.clear();
 

@@ -1350,12 +1350,12 @@ version = "0.1.0"
 dependencies = [
  "bincode",
  "borsh 1.5.1",
- "drillx 2.0.0-beta",
+ "drillx",
  "env_logger 0.11.3",
  "log",
- "ore-api 2.0.0-beta.1",
+ "ore-api 2.0.0-beta.6",
  "ore-cli",
- "ore-utils 2.0.0-beta.1",
+ "ore-utils 2.0.0-beta.6",
  "rayon",
  "solana-client",
  "solana-program",
@@ -1391,21 +1391,13 @@ dependencies = [
 
 [[package]]
 name = "drillx"
-version = "2.0.0-beta"
-dependencies = [
- "blake3",
- "equix",
- "strum",
-]
-
-[[package]]
-name = "drillx"
-version = "2.0.0-beta"
+version = "2.0.0-beta.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a3e8d2de66aeedec77a653a4e2cf0cf4de4ddf556947214becfc16de4604c5db"
+checksum = "3bc503e6662deb892b18b41e6d23d2604d7a7804c00d4b84e1d58ecf22daa61c"
 dependencies = [
  "blake3",
  "equix",
+ "serde",
  "solana-program",
  "strum",
 ]
@@ -2623,16 +2615,15 @@ checksum = "ff011a302c396a5197692431fc1948019154afc178baf7d8e37367442a4601cf"
 
 [[package]]
 name = "ore-api"
-version = "2.0.0-beta.1"
+version = "2.0.0-beta.6"
 dependencies = [
  "array-const-fn-init",
  "bytemuck",
  "const-crypto",
- "drillx 2.0.0-beta",
+ "drillx",
  "mpl-token-metadata",
  "num_enum 0.7.2",
- "ore-utils 2.0.0-beta.1",
- "shank",
+ "ore-utils 2.0.0-beta.6",
  "solana-program",
  "spl-associated-token-account",
  "spl-token",
@@ -2642,18 +2633,17 @@ dependencies = [
 
 [[package]]
 name = "ore-api"
-version = "2.0.0-beta.2"
+version = "2.0.0-beta.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "612d67826797dd32cac2769662462875e6015af26e6d8ef553e03c9f3b0c9994"
+checksum = "8a7d34b51e81353debe7ddd4d626395db7fe7a21712f0653b21b4e7db4219014"
 dependencies = [
  "array-const-fn-init",
  "bytemuck",
  "const-crypto",
- "drillx 2.0.0-beta (registry+https://github.com/rust-lang/crates.io-index)",
+ "drillx",
  "mpl-token-metadata",
  "num_enum 0.7.2",
- "ore-utils 2.0.0-beta.2",
- "shank",
+ "ore-utils 2.0.0-beta.6 (registry+https://github.com/rust-lang/crates.io-index)",
  "solana-program",
  "spl-associated-token-account",
  "spl-token",
@@ -2663,7 +2653,7 @@ dependencies = [
 
 [[package]]
 name = "ore-cli"
-version = "1.0.0-alpha.1"
+version = "1.0.0-alpha.5"
 dependencies = [
  "bincode",
  "bs58 0.5.1",
@@ -2672,11 +2662,11 @@ dependencies = [
  "chrono",
  "clap 4.5.9",
  "colored",
- "drillx 2.0.0-beta (registry+https://github.com/rust-lang/crates.io-index)",
+ "drillx",
  "futures",
  "num_cpus",
- "ore-api 2.0.0-beta.2",
- "ore-utils 2.0.0-beta.2",
+ "ore-api 2.0.0-beta.6 (registry+https://github.com/rust-lang/crates.io-index)",
+ "ore-utils 2.0.0-beta.6 (registry+https://github.com/rust-lang/crates.io-index)",
  "rand 0.8.5",
  "solana-cli-config",
  "solana-client",
@@ -2691,7 +2681,7 @@ dependencies = [
 
 [[package]]
 name = "ore-utils"
-version = "2.0.0-beta.1"
+version = "2.0.0-beta.6"
 dependencies = [
  "bytemuck",
  "solana-program",
@@ -2701,9 +2691,9 @@ dependencies = [
 
 [[package]]
 name = "ore-utils"
-version = "2.0.0-beta.2"
+version = "2.0.0-beta.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a57b6b200cb0a57758d440d3d0bbff3adfd1dfae377fb01bb68da66a767e7dd2"
+checksum = "f249bd7be8d0fae4be1e250f2ed86104023db4c219a61baaf32007b065a41102"
 dependencies = [
  "bytemuck",
  "solana-program",
@@ -3566,52 +3556,6 @@ checksum = "75872d278a8f37ef87fa0ddbda7802605cb18344497949862c0d4dcb291eba60"
 dependencies = [
  "digest 0.10.7",
  "keccak",
-]
-
-[[package]]
-name = "shank"
-version = "0.3.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "57c9395612d493b69a522725eef78a095f199d43eeb847f4a4b77ec0cacab535"
-dependencies = [
- "shank_macro",
-]
-
-[[package]]
-name = "shank_macro"
-version = "0.3.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8abef069c02e15f62233679b1e71f3152fac10f90b3ff89ebbad6a25b7497754"
-dependencies = [
- "proc-macro2",
- "quote",
- "shank_macro_impl",
- "shank_render",
- "syn 1.0.109",
-]
-
-[[package]]
-name = "shank_macro_impl"
-version = "0.3.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "64d3d92bfcc6e08f882f2264d774d1a2f46dc36122adc1b76416ba6405a29a9c"
-dependencies = [
- "anyhow",
- "proc-macro2",
- "quote",
- "serde",
- "syn 1.0.109",
-]
-
-[[package]]
-name = "shank_render"
-version = "0.3.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5a2ea9c6dd95ea311b3b81e63cf4e9c808ed04b098819e6d2c4b1a467d587203"
-dependencies = [
- "proc-macro2",
- "quote",
- "shank_macro_impl",
 ]
 
 [[package]]
