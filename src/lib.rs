@@ -1,6 +1,6 @@
 use borsh::{BorshDeserialize, BorshSerialize};
 use drillx::{Hash, Solution};
-use miner::{find_bus, send_and_confirm};
+use miner::{find_bus, get_clock, send_and_confirm};
 use ore_api::consts::{ONE_MINUTE, PROOF};
 use ore_api::state::Proof;
 use ore_utils::AccountDeserialize;
@@ -8,7 +8,7 @@ use solana_rpc_client::rpc_client::RpcClient;
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signature::Keypair;
 use solana_sdk::signer::Signer;
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 use std::net::{TcpListener, TcpStream};
 use std::sync::mpsc::{Receiver, SyncSender};
 use std::thread::spawn;
@@ -205,10 +205,16 @@ impl NodeHashComputer {
     pub fn receive_challenge(rpc_client: &RpcClient, staker_authority: Pubkey) -> ChallengeInput {
         // ore_cli::utils::
         let proof = get_proof(rpc_client, staker_authority);
+        let clock = get_clock(rpc_client);
+        let remaining_time = proof
+            .last_hash_at
+            .checked_add(ONE_MINUTE - 5)
+            .unwrap_or(clock.unix_timestamp + 1)
+            - clock.unix_timestamp;
         ChallengeInput {
             challenge: proof.challenge,
             // remaining_time: proof.last_stake_at.saturating_add(ONE_MINUTE) as _,
-            remaining_time: 20,
+            remaining_time: remaining_time as _,
         }
     }
     pub fn send_solution(socket: &mut Socket, solution: Vec<u8>) {
