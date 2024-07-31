@@ -4,6 +4,7 @@ use miner::{find_bus, get_clock, send_and_confirm};
 use ore_api::consts::{ONE_MINUTE, PROOF};
 use ore_api::state::Proof;
 use ore_utils::AccountDeserialize;
+use rand::Rng;
 use solana_rpc_client::rpc_client::RpcClient;
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signature::Keypair;
@@ -251,7 +252,7 @@ pub fn get_hash(challenge: ChallengeInput) -> (Hash, u64) {
                     let timer = Instant::now();
                     let mut memory = drillx::equix::SolverMemory::new();
                     move || {
-                        let mut nonce = u64::MAX.saturating_div(threads).saturating_mul(i);
+                        let mut nonce = rand::thread_rng().gen_range(0..u64::MAX);
                         let mut best_difficulty = 0;
                         let mut best_hash = Hash::default();
                         let mut best_nonce = 0;

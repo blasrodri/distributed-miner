@@ -12,6 +12,7 @@ ore-utils = {path = "../ore/utils"}
 env_logger = "0.11.3"
 log = "0.4.22"
 rayon = "1.10.0"
+rand = "0.8.4"
 structopt = { version = "0.3", default-features = false }
 tungstenite = "0.23.0"
 solana-program = "^1.18"
