@@ -306,8 +306,7 @@ pub fn get_hash(challenge: ChallengeInput) -> (Hash, u64) {
             }
         }
 
-        println!("diff: {best_difficulty}");
+        log::info!("diff: {best_difficulty}");
         return (best_hash, best_nonce);
     }
 }
-// drillx::hash_with_memory(&mut memory, challenge, nonce);
