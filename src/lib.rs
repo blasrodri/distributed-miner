@@ -20,7 +20,9 @@ pub mod miner;
 pub struct MasterNode {
     rpc: RpcClient,
     keypair: Keypair,
-    epoch_proofs: HashMap<Pubkey, Proof>,
+    // mapping between staking authority and best submitted proof
+    epoch_proofs: HashMap<Pubkey, Challenge>,
+    // channel to react over new proofs or new epoch
     rx: Receiver<SubmittedSolutionEnum>,
     state: HashMap<Pubkey, InnerState>,
 }
@@ -35,7 +37,7 @@ struct InnerState {
 #[derive(Debug, Clone, BorshDeserialize, BorshSerialize, PartialEq, Eq)]
 pub enum SubmittedSolutionEnum {
     SubmittedSolution(SubmittedSolution),
-    NewEpoch,
+    NewEpoch(Pubkey),
 }
 
 impl InnerState {
@@ -56,7 +58,7 @@ impl MasterNode {
     pub fn new(
         rpc: RpcClient,
         keypair: Keypair,
-        proofs: HashMap<Pubkey, Proof>,
+        proofs: HashMap<Pubkey, Challenge>,
         rx: Receiver<SubmittedSolutionEnum>,
     ) -> Self {
         let state = proofs
@@ -82,9 +84,9 @@ impl MasterNode {
                     log::info!("processing new solution");
                     self.process_submitted_solution(submitted_solution);
                 }
-                Ok(SubmittedSolutionEnum::NewEpoch) => {
+                Ok(SubmittedSolutionEnum::NewEpoch(ref staking_authority)) => {
                     log::info!("processing new epoch");
-                    self.process_new_epoch()
+                    self.process_new_epoch(staking_authority)
                 }
                 _ => panic!("wtf"),
             }
@@ -101,9 +103,9 @@ impl MasterNode {
             let digest = solution[0..16].try_into().unwrap();
             let nonce = solution[16..].try_into().unwrap();
             let solution = Solution::new(digest, nonce);
-            let proof = self.epoch_proofs.get(&staking_authority).unwrap();
-            log::info!("current challenge: {:?}", &proof.challenge);
-            if !solution.is_valid(&proof.challenge) {
+            let challenge = self.epoch_proofs.get(&staking_authority).unwrap();
+            log::info!("current challenge: {:?}", challenge);
+            if !solution.is_valid(challenge) {
                 log::error!("challenge not valid");
                 return;
             }
@@ -118,36 +120,36 @@ impl MasterNode {
         }
     }
 
-    fn process_new_epoch(&mut self) {
+    fn process_new_epoch(&mut self, staking_authority: &Pubkey) {
         // 1. submit best solution (if any)
         // 2. reset proofs
         // TODO: give rewards away
 
-        for (staking_authority, inner_state) in &mut self.state {
-            let digest = inner_state.best_submitted_solution.solution[0..16]
-                .try_into()
-                .unwrap();
-            let nonce = inner_state.best_submitted_solution.solution[16..]
-                .try_into()
-                .unwrap();
-            let solution = Solution::new(digest, nonce);
-            let ixs = vec![ore_api::instruction::mine(
-                self.keypair.pubkey(),
-                *staking_authority,
-                find_bus(),
-                solution,
-            )];
-            // todo: in parallel
-            let result = send_and_confirm(&self.rpc, &self.keypair, &ixs, false);
-            log::info!("Signature: {:?}", result);
-            inner_state.best_submitted_difficulty = 0;
-            inner_state.epoch_solutions.clear();
+        let inner_state = self.state.get_mut(staking_authority).unwrap();
+        let digest = inner_state.best_submitted_solution.solution[0..16]
+            .try_into()
+            .unwrap();
+        let nonce = inner_state.best_submitted_solution.solution[16..]
+            .try_into()
+            .unwrap();
+        let solution = Solution::new(digest, nonce);
+        let ixs = vec![ore_api::instruction::mine(
+            self.keypair.pubkey(),
+            *staking_authority,
+            find_bus(),
+            solution,
+        )];
+        // todo: in parallel
+        let result = send_and_confirm(&self.rpc, &self.keypair, &ixs, false);
+        log::info!("Signature: {:?}", result);
+        inner_state.best_submitted_difficulty = 0;
+        inner_state.epoch_solutions.clear();
 
-            // get new proof
-            let new_proof = get_proof(&self.rpc, *staking_authority);
-            log::info!("new challenge: {:?}", new_proof.challenge);
-            self.epoch_proofs.insert(*staking_authority, new_proof);
-        }
+        // get new proof
+        let new_proof = get_proof(&self.rpc, *staking_authority);
+        log::info!("new challenge: {:?}", new_proof.challenge);
+        self.epoch_proofs
+            .insert(*staking_authority, new_proof.challenge);
     }
 }
 
@@ -209,8 +211,8 @@ impl NodeHashComputer {
         let remaining_time = dbg!(proof
             .last_hash_at
             .checked_add(ONE_MINUTE - 5)
-            .unwrap_or(dbg!(clock.unix_timestamp + 10))
-            .max(clock.unix_timestamp + 10))
+            .unwrap_or(dbg!(clock.unix_timestamp + 30))
+            .max(clock.unix_timestamp + 30))
             - dbg!(clock.unix_timestamp);
         ChallengeInput {
             challenge: proof.challenge,
