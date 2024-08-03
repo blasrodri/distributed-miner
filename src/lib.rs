@@ -117,6 +117,8 @@ impl MasterNode {
                 inner_state.best_submitted_solution = submitted_solution.clone();
             }
             inner_state.epoch_solutions.push(submitted_solution);
+        } else {
+            log::error!("unknown staking authority")
         }
     }
 
@@ -211,8 +213,8 @@ impl NodeHashComputer {
         let remaining_time = dbg!(proof
             .last_hash_at
             .checked_add(ONE_MINUTE - 5)
-            .unwrap_or(dbg!(clock.unix_timestamp + 30))
-            .max(clock.unix_timestamp + 30))
+            .unwrap_or(dbg!(clock.unix_timestamp + 15))
+            .max(clock.unix_timestamp + 15))
             - dbg!(clock.unix_timestamp);
         ChallengeInput {
             challenge: proof.challenge,
