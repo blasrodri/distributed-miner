@@ -132,12 +132,15 @@ impl MasterNode {
                 .try_into()
                 .unwrap();
             let solution = Solution::new(digest, nonce);
-            let ixs = vec![ore_api::instruction::mine(
+            let mut ixs = vec![ore_api::instruction::auth(proof_pubkey(
+                self.keypair.pubkey(),
+            ))];
+            ixs.push(ore_api::instruction::mine(
                 self.keypair.pubkey(),
                 *staking_authority,
                 find_bus(),
                 solution,
-            )];
+            ));
             // todo: in parallel
             let result = send_and_confirm(&self.rpc, &self.keypair, &ixs, false);
             log::info!("Signature: {:?}", result);
