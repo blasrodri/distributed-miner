@@ -132,6 +132,11 @@ impl MasterNode {
                 .try_into()
                 .unwrap();
             let solution = Solution::new(digest, nonce);
+            let proof = self.epoch_proofs.get(&staking_authority).unwrap();
+            if !solution.is_valid(&proof.challenge) {
+                log::error!("challenge not valid");
+                return;
+            }
             let mut ixs = vec![ore_api::instruction::auth(proof_pubkey(
                 self.keypair.pubkey(),
             ))];
@@ -244,7 +249,7 @@ pub fn proof_pubkey(authority: Pubkey) -> Pubkey {
 
 pub fn get_hash(challenge: ChallengeInput) -> (Hash, u64) {
     loop {
-        let threads = 1;
+        let threads = 16;
         let handles: Vec<_> = (0..threads)
             .map(|i| {
                 std::thread::spawn({
@@ -256,6 +261,7 @@ pub fn get_hash(challenge: ChallengeInput) -> (Hash, u64) {
                     let mut memory = drillx::equix::SolverMemory::new();
                     move || {
                         let mut nonce = rand::thread_rng().gen_range(0..u64::MAX);
+                        // let mut nonce = u64::MAX.saturating_div(threads).saturating_mul(i);
                         let mut best_difficulty = 0;
                         let mut best_hash = Hash::default();
                         let mut best_nonce = 0;
@@ -282,7 +288,8 @@ pub fn get_hash(challenge: ChallengeInput) -> (Hash, u64) {
                                 break;
                             }
                             // Increment nonce
-                            nonce += 1;
+                            nonce = rand::thread_rng().gen_range(0..u64::MAX);
+                            // nonce += 1;
                         }
 
                         // Return the best nonce
