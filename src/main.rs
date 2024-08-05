@@ -43,7 +43,9 @@ fn main() {
             let mut master_node = MasterNode::new(
                 rpc_client,
                 keypair,
-                [(staking_authority.clone(), proof)].into_iter().collect(),
+                [(staking_authority.clone(), proof.challenge)]
+                    .into_iter()
+                    .collect(),
                 rx,
             );
             // spawn new epoch thread
@@ -58,11 +60,13 @@ fn main() {
                         .saturating_add(60)
                         .saturating_sub(1 as i64)
                         .saturating_sub(dbg!(clock.unix_timestamp))
-                        .max(10) as u64;
+                        .max(20) as u64;
                     log::info!("Next cutoff in {next_cutoff} seconds");
                     sleep(Duration::from_secs(next_cutoff));
-                    tx.send(distributed_drillx::SubmittedSolutionEnum::NewEpoch)
-                        .unwrap();
+                    tx.send(distributed_drillx::SubmittedSolutionEnum::NewEpoch(
+                        staking_authority,
+                    ))
+                    .unwrap();
                     log::info!("New epoch submitted");
                 }
             });
@@ -117,12 +121,6 @@ enum NodeType {
     Node {
         #[structopt(short = "m", long = "master", default_value = "127.0.0.1")]
         master: String,
-        #[structopt(
-            short = "k",
-            long = "keypair",
-            default_value = "/Users/blasrodriguezgarciairizar/.config/solana/id.json"
-        )]
-        keypair: String,
         #[structopt(
             short = "m",
             long = "miner_authority",

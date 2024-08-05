@@ -21,7 +21,9 @@ pub mod miner;
 pub struct MasterNode {
     rpc: RpcClient,
     keypair: Keypair,
-    epoch_proofs: HashMap<Pubkey, Proof>,
+    // mapping between staking authority and best submitted proof
+    epoch_proofs: HashMap<Pubkey, Challenge>,
+    // channel to react over new proofs or new epoch
     rx: Receiver<SubmittedSolutionEnum>,
     state: HashMap<Pubkey, InnerState>,
 }
@@ -36,7 +38,7 @@ struct InnerState {
 #[derive(Debug, Clone, BorshDeserialize, BorshSerialize, PartialEq, Eq)]
 pub enum SubmittedSolutionEnum {
     SubmittedSolution(SubmittedSolution),
-    NewEpoch,
+    NewEpoch(Pubkey),
 }
 
 impl InnerState {
@@ -57,7 +59,7 @@ impl MasterNode {
     pub fn new(
         rpc: RpcClient,
         keypair: Keypair,
-        proofs: HashMap<Pubkey, Proof>,
+        proofs: HashMap<Pubkey, Challenge>,
         rx: Receiver<SubmittedSolutionEnum>,
     ) -> Self {
         let state = proofs
@@ -83,9 +85,9 @@ impl MasterNode {
                     log::info!("processing new solution");
                     self.process_submitted_solution(submitted_solution);
                 }
-                Ok(SubmittedSolutionEnum::NewEpoch) => {
+                Ok(SubmittedSolutionEnum::NewEpoch(ref staking_authority)) => {
                     log::info!("processing new epoch");
-                    self.process_new_epoch()
+                    self.process_new_epoch(staking_authority)
                 }
                 _ => panic!("wtf"),
             }
@@ -102,9 +104,9 @@ impl MasterNode {
             let digest = solution[0..16].try_into().unwrap();
             let nonce = solution[16..].try_into().unwrap();
             let solution = Solution::new(digest, nonce);
-            let proof = self.epoch_proofs.get(&staking_authority).unwrap();
-            log::info!("current challenge: {:?}", &proof.challenge);
-            if !solution.is_valid(&proof.challenge) {
+            let challenge = self.epoch_proofs.get(&staking_authority).unwrap();
+            log::info!("current challenge: {:?}", challenge);
+            if !solution.is_valid(challenge) {
                 log::error!("challenge not valid");
                 return;
             }
@@ -116,10 +118,12 @@ impl MasterNode {
                 inner_state.best_submitted_solution = submitted_solution.clone();
             }
             inner_state.epoch_solutions.push(submitted_solution);
+        } else {
+            log::error!("unknown staking authority")
         }
     }
 
-    fn process_new_epoch(&mut self) {
+    fn process_new_epoch(&mut self, staking_authority: &Pubkey) {
         // 1. submit best solution (if any)
         // 2. reset proofs
         // TODO: give rewards away
@@ -133,7 +137,7 @@ impl MasterNode {
                 .unwrap();
             let solution = Solution::new(digest, nonce);
             let proof = self.epoch_proofs.get(&staking_authority).unwrap();
-            if !solution.is_valid(&proof.challenge) {
+            if !solution.is_valid(&proof) {
                 log::error!("challenge not valid");
                 return;
             }
@@ -151,12 +155,13 @@ impl MasterNode {
             log::info!("Signature: {:?}", result);
             inner_state.best_submitted_difficulty = 0;
             inner_state.epoch_solutions.clear();
-
-            // get new proof
-            let new_proof = get_proof(&self.rpc, *staking_authority);
-            log::info!("new challenge: {:?}", new_proof.challenge);
-            self.epoch_proofs.insert(*staking_authority, new_proof);
         }
+
+        // get new proof
+        let new_proof = get_proof(&self.rpc, *staking_authority);
+        log::info!("new challenge: {:?}", new_proof.challenge);
+        self.epoch_proofs
+            .insert(*staking_authority, new_proof.challenge);
     }
 }
 
@@ -218,8 +223,8 @@ impl NodeHashComputer {
         let remaining_time = dbg!(proof
             .last_hash_at
             .checked_add(ONE_MINUTE - 5)
-            .unwrap_or(dbg!(clock.unix_timestamp + 10))
-            .max(clock.unix_timestamp + 10))
+            .unwrap_or(dbg!(clock.unix_timestamp + 15))
+            .max(clock.unix_timestamp + 15))
             - dbg!(clock.unix_timestamp);
         ChallengeInput {
             challenge: proof.challenge,
@@ -313,8 +318,7 @@ pub fn get_hash(challenge: ChallengeInput) -> (Hash, u64) {
             }
         }
 
-        println!("diff: {best_difficulty}");
+        log::info!("diff: {best_difficulty}");
         return (best_hash, best_nonce);
     }
 }
-// drillx::hash_with_memory(&mut memory, challenge, nonce);
