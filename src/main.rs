@@ -21,16 +21,16 @@ use structopt::StructOpt;
 fn main() {
     env_logger::init();
     let opt = NodeType::from_args();
-    let cluster = "https://api.devnet.solana.com";
-    let rpc_client: RpcClient =
-        RpcClient::new_with_commitment(cluster, CommitmentConfig::confirmed());
 
     let (tx, rx) = sync_channel(1_000);
     match opt {
         NodeType::Master {
             host,
             keypair: keypair_path,
+            rpc_url,
         } => {
+            let rpc_client: RpcClient =
+                RpcClient::new_with_commitment(rpc_url.clone(), CommitmentConfig::confirmed());
             let keypair: Keypair =
                 Keypair::read_from_file(keypair_path).expect("could not read keypair");
             let tx_cloned = tx.clone();
@@ -51,7 +51,7 @@ fn main() {
             // spawn new epoch thread
             spawn(move || {
                 let rpc_client: RpcClient =
-                    RpcClient::new_with_commitment(cluster, CommitmentConfig::confirmed());
+                    RpcClient::new_with_commitment(rpc_url, CommitmentConfig::confirmed());
                 loop {
                     let proof = get_proof(&rpc_client, staking_authority.clone());
                     let clock = get_clock(&rpc_client);
@@ -75,8 +75,11 @@ fn main() {
         NodeType::Node {
             master,
             miner_authority,
+            rpc_url,
             ..
         } => {
+            let rpc_client: RpcClient =
+                RpcClient::new_with_commitment(rpc_url, CommitmentConfig::confirmed());
             let staker_authority =
                 Pubkey::from_str(&miner_authority).expect("could not load miner authority");
             let mut socket = NodeHashComputer::connect(master).unwrap();
@@ -117,6 +120,7 @@ enum NodeType {
             default_value = "/Users/blasrodriguezgarciairizar/.config/solana/id.json"
         )]
         keypair: String,
+        rpc_url: String,
     },
     Node {
         #[structopt(short = "m", long = "master", default_value = "127.0.0.1")]
@@ -127,5 +131,6 @@ enum NodeType {
             default_value = "9kQxYE42uPunfSQE4925mNZ7nV1REXtCPg944UfVcRLZ"
         )]
         miner_authority: String,
+        rpc_url: String,
     },
 }
