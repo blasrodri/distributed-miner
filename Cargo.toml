@@ -5,13 +5,14 @@ edition = "2021"
 
 [dependencies]
 borsh = {version = "1.5.1", features = ["derive"] }
-drillx = { version = "2.0.0-beta.1", features = ["solana"] }
-ore-api = {path = "../ore/api"}
-ore-cli = {path = "../ore-cli", package = "ore-cli"}
-ore-utils = {path = "../ore/utils"}
+drillx = { version = "2.0.0", features = ["solana"] }
+ore-api = { version = "=2.1.0-devnet" }
+ore-cli = { version = "=1.1.0-devnet" }
+ore-utils = { version = "=2.1.0-devnet" }
 env_logger = "0.11.3"
 log = "0.4.22"
 rayon = "1.10.0"
+rand = "0.8.4"
 structopt = { version = "0.3", default-features = false }
 tungstenite = "0.23.0"
 solana-program = "^1.18"

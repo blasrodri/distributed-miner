@@ -1352,9 +1352,10 @@ dependencies = [
  "drillx",
  "env_logger 0.11.5",
  "log",
- "ore-api 2.1.0-devnet",
+ "ore-api",
  "ore-cli",
- "ore-utils 2.1.0-devnet",
+ "ore-utils",
+ "rand 0.8.5",
  "rayon",
  "solana-client",
  "solana-program",
@@ -2616,26 +2617,8 @@ checksum = "ff011a302c396a5197692431fc1948019154afc178baf7d8e37367442a4601cf"
 [[package]]
 name = "ore-api"
 version = "2.1.0-devnet"
-dependencies = [
- "array-const-fn-init",
- "bytemuck",
- "const-crypto",
- "drillx",
- "mpl-token-metadata",
- "num_enum 0.7.3",
- "ore-utils 2.1.0-devnet",
- "solana-program",
- "spl-associated-token-account",
- "spl-token",
- "static_assertions",
- "thiserror",
-]
-
-[[package]]
-name = "ore-api"
-version = "2.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0697cf6480f6c81117db19ceeaa66206b76f1d5b0e2896767f6d797f50181475"
+checksum = "70a599415e0f1a402c7df3730958d6cf28e112b22c8192067dbd845ddf7ecc2d"
 dependencies = [
  "array-const-fn-init",
  "bytemuck",
@@ -2643,7 +2626,7 @@ dependencies = [
  "drillx",
  "mpl-token-metadata",
  "num_enum 0.7.3",
- "ore-utils 2.1.0",
+ "ore-utils",
  "solana-program",
  "spl-associated-token-account",
  "spl-token",
@@ -2654,6 +2637,8 @@ dependencies = [
 [[package]]
 name = "ore-cli"
 version = "1.1.0-devnet"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "621a97eed62ef1adc7584b8a8637aab316837ecdfd84745bbbb681df2b60db88"
 dependencies = [
  "bincode",
  "bs58 0.5.1",
@@ -2665,8 +2650,8 @@ dependencies = [
  "drillx",
  "futures",
  "num_cpus",
- "ore-api 2.1.0",
- "ore-utils 2.1.0",
+ "ore-api",
+ "ore-utils",
  "rand 0.8.5",
  "solana-cli-config",
  "solana-client",
@@ -2682,18 +2667,8 @@ dependencies = [
 [[package]]
 name = "ore-utils"
 version = "2.1.0-devnet"
-dependencies = [
- "bytemuck",
- "solana-program",
- "spl-associated-token-account",
- "spl-token",
-]
-
-[[package]]
-name = "ore-utils"
-version = "2.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "90a09a7a1e296ce157c75cf41145edb3608b838f9503125897552f4fe49acf64"
+checksum = "8b838be6547e3fde2a822436fe77c475632e08d9c84aa8be6a4a4bdc384cb9ff"
 dependencies = [
  "bytemuck",
  "solana-program",

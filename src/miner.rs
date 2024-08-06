@@ -1,7 +1,6 @@
 use std::time::Duration;
 
-use drillx::Solution;
-use ore_api::consts::{BUS_ADDRESSES, BUS_COUNT, EPOCH_DURATION};
+use ore_api::consts::BUS_ADDRESSES;
 use solana_program::pubkey::Pubkey;
 use solana_rpc_client::spinner;
 use solana_sdk::{
@@ -93,13 +92,17 @@ pub fn send_and_confirm(
                         }
 
                         // Handle confirmation errors
-                        Err(_err) => {}
+                        Err(err) => {
+                            log::error!("{:?}", err);
+                        }
                     }
                 }
             }
 
             // Handle submit errors
-            Err(err) => {}
+            Err(err) => {
+                log::error!("{:?}", err);
+            }
         }
 
         // Retry
