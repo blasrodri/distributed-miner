@@ -29,6 +29,7 @@ fn main() {
             keypair: keypair_path,
             rpc_url,
             priority_fees,
+            staking_authority
         } => {
             let rpc_client: RpcClient =
                 RpcClient::new_with_commitment(rpc_url.clone(), CommitmentConfig::confirmed());
@@ -39,7 +40,7 @@ fn main() {
             // TODO: load staking authorities from a file or whatever
             let proof = get_proof(&rpc_client, keypair.pubkey());
             // log::info!("{:?}", proof.last_hash_at);
-            let staking_authority = keypair.pubkey();
+            let staking_authority = Pubkey::from_str(&staking_authority).expect("could not load staking authority");
 
             let mut master_node = MasterNode::new(
                 rpc_client,
@@ -78,6 +79,7 @@ fn main() {
             master,
             miner_authority,
             rpc_url,
+            threads,
             ..
         } => {
             let rpc_client: RpcClient =
@@ -90,7 +92,7 @@ fn main() {
                 let challenge = NodeHashComputer::receive_challenge(&rpc_client, staker_authority);
                 // log::info!("challenge: {:?}", challenge);
 
-                let (solution_hash, nonce) = get_hash(challenge.clone());
+                let (solution_hash, nonce) = get_hash(challenge.clone(), threads);
                 let solution =
                     [solution_hash.d.as_slice(), nonce.to_le_bytes().as_slice()].concat();
                 // let s = Solution::new(solution_hash.d, nonce.to_le_bytes());
@@ -123,6 +125,12 @@ enum NodeType {
         )]
         keypair: String,
         #[structopt(
+            short = "s",
+            long = "staking_authority",
+            default_value = "~/.config/solana/id.json"
+        )]
+        staking_authority: String,
+        #[structopt(
             short = "r",
             long = "rpc_url",
             default_value = "http://api.mainnet-beta.solana.com"
@@ -146,5 +154,7 @@ enum NodeType {
             default_value = "http://api.mainnet-beta.solana.com"
         )]
         rpc_url: String,
+        #[structopt(short = "t", long = "threads", default_value = "1")]    
+        threads: u64,
     },
 }

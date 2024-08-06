@@ -169,7 +169,7 @@ impl MasterNode {
 
         // get new proof
         let new_proof = get_proof(&self.rpc, *staking_authority);
-        log::info!("new challenge: {:?}", new_proof.challenge);
+        // log::info!("new challenge: {:?}", new_proof.challenge);
         self.epoch_proofs
             .insert(*staking_authority, new_proof.challenge);
     }
@@ -261,9 +261,8 @@ pub fn proof_pubkey(authority: Pubkey) -> Pubkey {
     Pubkey::find_program_address(&[PROOF, authority.as_ref()], &ore_api::ID).0
 }
 
-pub fn get_hash(challenge: ChallengeInput) -> (Hash, u64) {
+pub fn get_hash(challenge: ChallengeInput, threads: u64) -> (Hash, u64) {
     loop {
-        let threads = 16;
         let handles: Vec<_> = (0..threads)
             .map(|i| {
                 std::thread::spawn({
