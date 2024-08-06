@@ -38,7 +38,7 @@ fn main() {
             thread::spawn(move || start_websocket_server(host, tx_cloned));
             // TODO: load staking authorities from a file or whatever
             let proof = get_proof(&rpc_client, keypair.pubkey());
-            log::info!("{:?}", proof.last_hash_at);
+            // log::info!("{:?}", proof.last_hash_at);
             let staking_authority = keypair.pubkey();
 
             let mut master_node = MasterNode::new(
@@ -58,10 +58,10 @@ fn main() {
                     let proof = get_proof(&rpc_client, staking_authority.clone());
                     let clock = get_clock(&rpc_client);
 
-                    let next_cutoff = dbg!(proof.last_hash_at)
+                    let next_cutoff = proof.last_hash_at
                         .saturating_add(60)
                         .saturating_sub(1 as i64)
-                        .saturating_sub(dbg!(clock.unix_timestamp))
+                        .saturating_sub(clock.unix_timestamp)
                         .max(20) as u64;
                     log::info!("Next cutoff in {next_cutoff} seconds");
                     sleep(Duration::from_secs(next_cutoff));
@@ -88,7 +88,7 @@ fn main() {
             // move this to its own function
             loop {
                 let challenge = NodeHashComputer::receive_challenge(&rpc_client, staker_authority);
-                log::info!("challenge: {:?}", challenge);
+                // log::info!("challenge: {:?}", challenge);
 
                 let (solution_hash, nonce) = get_hash(challenge.clone());
                 let solution =
@@ -119,7 +119,7 @@ enum NodeType {
         #[structopt(
             short = "k",
             long = "keypair",
-            default_value = "/Users/blasrodriguezgarciairizar/.config/solana/id.json"
+            default_value = "~/.config/solana/id.json"
         )]
         keypair: String,
         #[structopt(

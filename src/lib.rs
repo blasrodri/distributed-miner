@@ -108,7 +108,7 @@ impl MasterNode {
             let nonce = solution[16..].try_into().unwrap();
             let solution = Solution::new(digest, nonce);
             let challenge = self.epoch_proofs.get(&staking_authority).unwrap();
-            log::info!("current challenge: {:?}", challenge);
+            // log::info!("current challenge: {:?}", challenge);
             if !solution.is_valid(challenge) {
                 log::error!("challenge not valid");
                 return;
@@ -229,12 +229,12 @@ impl NodeHashComputer {
     pub fn receive_challenge(rpc_client: &RpcClient, staker_authority: Pubkey) -> ChallengeInput {
         let proof = get_proof(rpc_client, staker_authority);
         let clock = get_clock(rpc_client);
-        let remaining_time = dbg!(proof
+        let remaining_time = proof
             .last_hash_at
             .checked_add(ONE_MINUTE - 5)
             .unwrap_or(dbg!(clock.unix_timestamp + 15))
-            .max(clock.unix_timestamp + 15))
-            - dbg!(clock.unix_timestamp);
+            .max(clock.unix_timestamp + 15)
+            - clock.unix_timestamp;
         ChallengeInput {
             challenge: proof.challenge,
             // remaining_time: proof.last_stake_at.saturating_add(ONE_MINUTE) as _,
