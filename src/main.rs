@@ -21,24 +21,26 @@ use structopt::StructOpt;
 fn main() {
     env_logger::init();
     let opt = NodeType::from_args();
-    let cluster = "https://api.devnet.solana.com";
-    let rpc_client: RpcClient =
-        RpcClient::new_with_commitment(cluster, CommitmentConfig::confirmed());
 
     let (tx, rx) = sync_channel(1_000);
     match opt {
         NodeType::Master {
             host,
             keypair: keypair_path,
+            rpc_url,
+            priority_fees,
+            staking_authority
         } => {
+            let rpc_client: RpcClient =
+                RpcClient::new_with_commitment(rpc_url.clone(), CommitmentConfig::confirmed());
             let keypair: Keypair =
                 Keypair::read_from_file(keypair_path).expect("could not read keypair");
             let tx_cloned = tx.clone();
             thread::spawn(move || start_websocket_server(host, tx_cloned));
             // TODO: load staking authorities from a file or whatever
             let proof = get_proof(&rpc_client, keypair.pubkey());
-            log::info!("{:?}", proof.last_hash_at);
-            let staking_authority = keypair.pubkey();
+            // log::info!("{:?}", proof.last_hash_at);
+            let staking_authority = Pubkey::from_str(&staking_authority).expect("could not load staking authority");
 
             let mut master_node = MasterNode::new(
                 rpc_client,
@@ -47,19 +49,20 @@ fn main() {
                     .into_iter()
                     .collect(),
                 rx,
+                priority_fees,
             );
             // spawn new epoch thread
             spawn(move || {
                 let rpc_client: RpcClient =
-                    RpcClient::new_with_commitment(cluster, CommitmentConfig::confirmed());
+                    RpcClient::new_with_commitment(rpc_url, CommitmentConfig::confirmed());
                 loop {
                     let proof = get_proof(&rpc_client, staking_authority.clone());
                     let clock = get_clock(&rpc_client);
 
-                    let next_cutoff = dbg!(proof.last_hash_at)
+                    let next_cutoff = proof.last_hash_at
                         .saturating_add(60)
                         .saturating_sub(1 as i64)
-                        .saturating_sub(dbg!(clock.unix_timestamp))
+                        .saturating_sub(clock.unix_timestamp)
                         .max(20) as u64;
                     log::info!("Next cutoff in {next_cutoff} seconds");
                     sleep(Duration::from_secs(next_cutoff));
@@ -75,17 +78,21 @@ fn main() {
         NodeType::Node {
             master,
             miner_authority,
+            rpc_url,
+            threads,
             ..
         } => {
+            let rpc_client: RpcClient =
+                RpcClient::new_with_commitment(rpc_url, CommitmentConfig::confirmed());
             let staker_authority =
                 Pubkey::from_str(&miner_authority).expect("could not load miner authority");
             let mut socket = NodeHashComputer::connect(master).unwrap();
             // move this to its own function
             loop {
                 let challenge = NodeHashComputer::receive_challenge(&rpc_client, staker_authority);
-                log::info!("challenge: {:?}", challenge);
+                // log::info!("challenge: {:?}", challenge);
 
-                let (solution_hash, nonce) = get_hash(challenge.clone());
+                let (solution_hash, nonce) = get_hash(challenge.clone(), threads);
                 let solution =
                     [solution_hash.d.as_slice(), nonce.to_le_bytes().as_slice()].concat();
                 // let s = Solution::new(solution_hash.d, nonce.to_le_bytes());
@@ -114,9 +121,23 @@ enum NodeType {
         #[structopt(
             short = "k",
             long = "keypair",
-            default_value = "/Users/blasrodriguezgarciairizar/.config/solana/id.json"
+            default_value = "~/.config/solana/id.json"
         )]
         keypair: String,
+        #[structopt(
+            short = "s",
+            long = "staking_authority",
+            default_value = "~/.config/solana/id.json"
+        )]
+        staking_authority: String,
+        #[structopt(
+            short = "r",
+            long = "rpc_url",
+            default_value = "http://api.mainnet-beta.solana.com"
+        )]
+        rpc_url: String,
+        #[structopt(short = "p", long = "priority_fees", default_value = "0")]
+        priority_fees: u64,
     },
     Node {
         #[structopt(short = "m", long = "master", default_value = "127.0.0.1")]
@@ -127,5 +148,13 @@ enum NodeType {
             default_value = "9kQxYE42uPunfSQE4925mNZ7nV1REXtCPg944UfVcRLZ"
         )]
         miner_authority: String,
+        #[structopt(
+            short = "r",
+            long = "rpc_url",
+            default_value = "http://api.mainnet-beta.solana.com"
+        )]
+        rpc_url: String,
+        #[structopt(short = "t", long = "threads", default_value = "1")]    
+        threads: u64,
     },
 }
