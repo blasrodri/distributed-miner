@@ -122,7 +122,13 @@ enum NodeType {
             default_value = "/Users/blasrodriguezgarciairizar/.config/solana/id.json"
         )]
         keypair: String,
+        #[structopt(
+            short = "r",
+            long = "rpc_url",
+            default_value = "http://api.mainnet-beta.solana.com"
+        )]
         rpc_url: String,
+        #[structopt(short = "p", long = "priority_fees", default_value = "0")]
         priority_fees: u64,
     },
     Node {
@@ -134,6 +140,11 @@ enum NodeType {
             default_value = "9kQxYE42uPunfSQE4925mNZ7nV1REXtCPg944UfVcRLZ"
         )]
         miner_authority: String,
+        #[structopt(
+            short = "r",
+            long = "rpc_url",
+            default_value = "http://api.mainnet-beta.solana.com"
+        )]
         rpc_url: String,
     },
 }
