@@ -26,6 +26,7 @@ pub struct MasterNode {
     // channel to react over new proofs or new epoch
     rx: Receiver<SubmittedSolutionEnum>,
     state: HashMap<Pubkey, InnerState>,
+    priority_fees: u64,
 }
 
 #[derive(Debug)]
@@ -61,6 +62,7 @@ impl MasterNode {
         keypair: Keypair,
         proofs: HashMap<Pubkey, Challenge>,
         rx: Receiver<SubmittedSolutionEnum>,
+        priority_fees: u64,
     ) -> Self {
         let state = proofs
             .keys()
@@ -73,6 +75,7 @@ impl MasterNode {
             epoch_proofs: proofs,
             rx,
             state,
+            priority_fees,
         }
     }
 
@@ -151,7 +154,14 @@ impl MasterNode {
                 solution,
             ));
             // todo: in parallel
-            let result = send_and_confirm(&self.rpc, &self.keypair, &ixs, false);
+            let result = send_and_confirm(
+                &self.rpc,
+                &self.keypair,
+                &ixs,
+                self.priority_fees,
+                miner::ComputeBudget::Dynamic,
+                false,
+            );
             log::info!("Signature: {:?}", result);
             inner_state.best_submitted_difficulty = 0;
             inner_state.epoch_solutions.clear();
@@ -217,7 +227,6 @@ impl NodeHashComputer {
     }
 
     pub fn receive_challenge(rpc_client: &RpcClient, staker_authority: Pubkey) -> ChallengeInput {
-        // ore_cli::utils::
         let proof = get_proof(rpc_client, staker_authority);
         let clock = get_clock(rpc_client);
         let remaining_time = dbg!(proof

@@ -28,6 +28,7 @@ fn main() {
             host,
             keypair: keypair_path,
             rpc_url,
+            priority_fees,
         } => {
             let rpc_client: RpcClient =
                 RpcClient::new_with_commitment(rpc_url.clone(), CommitmentConfig::confirmed());
@@ -47,6 +48,7 @@ fn main() {
                     .into_iter()
                     .collect(),
                 rx,
+                priority_fees,
             );
             // spawn new epoch thread
             spawn(move || {
@@ -121,6 +123,7 @@ enum NodeType {
         )]
         keypair: String,
         rpc_url: String,
+        priority_fees: u64,
     },
     Node {
         #[structopt(short = "m", long = "master", default_value = "127.0.0.1")]
