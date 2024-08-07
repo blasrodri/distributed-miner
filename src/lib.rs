@@ -17,7 +17,7 @@ use std::time::Instant;
 use tungstenite::{accept, stream::MaybeTlsStream, Message, WebSocket};
 
 pub mod miner;
-
+pub mod rewards;
 pub struct MasterNode {
     rpc: RpcClient,
     keypair: Keypair,
@@ -200,7 +200,7 @@ pub struct ChallengeInput {
     remaining_time: u64,
 }
 
-#[derive(Debug, Clone, BorshDeserialize, BorshSerialize, PartialEq, Eq)]
+#[derive(Debug, Clone, BorshDeserialize, BorshSerialize, PartialEq, Eq, Hash)]
 pub struct SubmittedSolution {
     pub staking_authority: Pubkey,
     pub miner_authority: Pubkey,
